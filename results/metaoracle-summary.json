@@ -1,0 +1,50 @@
+{
+  "contract_candidates_checked": 1188,
+  "counted_obligations": 4395,
+  "eligibility_mutant_counterexamples": 180,
+  "existential_mutant_counterexamples": 64,
+  "first_existential_mutant_witness": {
+    "fiber": [
+      "p0",
+      "p1"
+    ],
+    "history": [],
+    "plant_index": 61,
+    "safe_states_in_fiber": [
+      "p1"
+    ],
+    "unsafe_states_in_fiber": [
+      "p0"
+    ]
+  },
+  "greatest_contract_mismatches": 0,
+  "kernel_mismatches": 0,
+  "nonblocking_mismatches": 0,
+  "observer_mismatches": 0,
+  "plants_checked": 486,
+  "plants_with_nonblocking_contract": 130,
+  "receipt_partitions_by_bound": {
+    "0": 1,
+    "1": 2,
+    "2": 5,
+    "3": 15,
+    "4": 52
+  },
+  "receipt_partitions_checked": 75,
+  "scope": "Exhaustive finite meta-check over the declared two-pre/two-post-state universe; not a proof of the arbitrary finite theorem and not a protocol evaluation.",
+  "universe": {
+    "good_terminals": "every subset of actual post dead ends",
+    "grant_options": "none, t0, or t1 independently at each pre state",
+    "initial_sets": "all nonempty subsets of the two pre states",
+    "post_edge": "t0->t1 absent or hidden",
+    "post_states": [
+      "t0",
+      "t1"
+    ],
+    "pre_edge": "p0->p1 absent, hidden, or visible a",
+    "pre_states": [
+      "p0",
+      "p1"
+    ]
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "address_space_limit_bytes": 2500000000,
+  "bridge_input_bytes": 2585,
+  "combined_counted_obligations": 18963,
+  "cpu_seconds": 1.3812505599999998,
+  "inputs_bytes": 43845,
+  "metaoracle_contract_candidates_checked": 1188,
+  "metaoracle_counted_obligations": 4395,
+  "metaoracle_plants_checked": 486,
+  "network_requests": 0,
+  "parametric_bounds_checked": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "parametric_counted_obligations": 1993,
+  "peak_rss_kib": 97836,
+  "process_cpu_limit_seconds": 120,
+  "randomness": "none; exhaustive lexicographic enumeration",
+  "recorded_replay_counted_obligations": 14568,
+  "resource_measurement_excludes_metaoracle": true,
+  "retained_counted_obligations_total": 18963,
+  "timing_scope": "recorded 14,568-obligation replay before the tiny-plant meta-oracle was added; excludes compilation; RSS includes interpreter startup",
+  "wall_seconds": 1.3813644950000707,
+  "workers": 1
+}

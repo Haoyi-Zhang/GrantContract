@@ -1,0 +1,156 @@
+{
+  "status": "PASS_RETAINED_OUTPUTS_AND_FINAL_REVISION_VALIDATED_WITH_DISCLOSED_CAMPAIGN_NONCOMPLIANCE",
+  "declared_scientific_scope": "finite completed-event universe, detailed K=1 bridge, parameterized bridge K=0..4, and handwritten theorems for finite acyclic one-shot grant plants and arbitrary finite stale-response bound K under the stated premises",
+  "interpretation": "A prior clean replay established deterministic regeneration of the original ten finite outputs. The final revision adds the generic synthesizer meta-oracle output, validates all eleven retained outputs by parsed value, runs the 69-test suite in the working tree and two clean archive extractions, and rebuilds byte-identical 12/3-page PDFs. It does not mechanize the handwritten arbitrary-K proof, validate a named industrial hierarchy, supply hardware performance, constitute independent review, or cure the cumulative enumeration-budget violation.",
+  "campaign_accounting": {
+    "status": "NONCOMPLIANT_CUMULATIVE_ENUMERATION_BUDGET",
+    "original_ceiling_obligations": 100000,
+    "original_known_charge_before_completion": 108118,
+    "original_minimum_excess": 8118,
+    "prospective_ceiling_obligations": 160000,
+    "known_conservative_lower_bound": 206552,
+    "minimum_excess_over_prospective_ceiling": 46552,
+    "exact_all_in_total_known": false,
+    "remaining_reserve_claimed": false,
+    "final_revision_full_reproduce_executed": false,
+    "note": "The lower bound includes three identifiable meta-oracle development invocations and four identifiable full validation suites at their declared minimum; unmetered partial invocations make the exact total larger or equal."
+  },
+  "retained_prior_clean_replay": {
+    "command": "python reproduce.py --output reproduced",
+    "exit_code": 0,
+    "counted_obligations": 14568,
+    "stable_outputs_generated": 10,
+    "cpu_seconds_after_imports": 1.3812505599999998,
+    "wall_seconds_after_imports": 1.3813644950000707,
+    "peak_rss_kib": 97836,
+    "workers": 1,
+    "network_requests": 0,
+    "randomness": "none; exhaustive lexicographic enumeration"
+  },
+  "final_revision_validation": {
+    "working_tree_tests": {
+      "command": "python -m unittest discover -s tests -v",
+      "exit_code": 0,
+      "passed": 69,
+      "failed": 0
+    },
+    "clean_full_project_tests": {
+      "command": "python -m unittest discover -s tests -v",
+      "exit_code": 0,
+      "passed": 69,
+      "failed": 0
+    },
+    "clean_standalone_tests": {
+      "command": "python -m unittest discover -s tests -v",
+      "exit_code": 0,
+      "passed": 69,
+      "failed": 0
+    },
+    "verify": {
+      "command": "python verify.py --output results",
+      "exit_code": 0,
+      "environments": 3,
+      "stable_outputs_compared": 11,
+      "contract_exactness_mismatches": 0,
+      "metaoracle_mismatches": 0,
+      "public_protocol_facts": 5,
+      "reference_audit_records": 33,
+      "reference_audit_status": "all PASS"
+    },
+    "paper_build": {
+      "command": "python build.py",
+      "working_directory": "paper",
+      "exit_code": 0,
+      "clean_archive_rebuild": true,
+      "main_pages": 12,
+      "supplement_pages": 3,
+      "reference_gate_records": 33,
+      "tc_calibration_papers": 12,
+      "abstract_words": 196,
+      "clean_rebuild_pdf_hashes_identical": true
+    },
+    "pdf_preflight": {
+      "main_and_supplement_parse": "PASS",
+      "fonts_embedded": true,
+      "text_extractable": true,
+      "replacement_glyphs": 0,
+      "pages_rendered_and_inspected": 15,
+      "render_dpi": 200,
+      "clipping_overlap_or_missing_glyphs_observed": false,
+      "final_reference_page_normal_baseline": true
+    }
+  },
+  "scientific_outputs": {
+    "completed_event_candidates": 2892,
+    "observation_certificates": 199,
+    "detailed_paths": 140,
+    "completed_paths": 132,
+    "blocked_paths": 8,
+    "parameterized_plants": 25,
+    "greatest_contracts": 50,
+    "parameterized_obligations": 1993,
+    "parameterized_mismatches": 0,
+    "contract_exactness_mismatches": 0,
+    "unsafe_grant_histories": 0,
+    "ineligible_grant_histories": 0,
+    "missed_safe_histories": 0,
+    "reported_disagreements": 0,
+    "stable_output_count": 11,
+    "metaoracle_plants": 486,
+    "metaoracle_contract_candidates": 1188,
+    "metaoracle_receipt_partitions": 75,
+    "metaoracle_counted_obligations": 4395,
+    "retained_counted_obligations_total": 18963
+  },
+  "new_final_revision_assurance": {
+    "generic_one_shot_synthesizer": "reverse-topological kernel plus hidden-closure observer construction",
+    "specialized_agreement": "generic synthesizer agrees with the specialized K=1 analyzer for five mechanisms and two interfaces",
+    "rejected_out_of_scope_inputs": [
+      "cyclic plant",
+      "second-grant path",
+      "pre/post phase overlap",
+      "pre-grant good terminal",
+      "nonterminal state declared good"
+    ],
+    "receipt_partition_result": "zero pending must be separated from every positive pending count; arbitrary refinement among positive counts is unnecessary",
+    "owned_transfer": "label-preserving K=1 graph isomorphism discharges L1-L6 for the two owned encodings",
+    "regression_caught_and_fixed": "generation paths may terminate after any d in [0,r] delivered fills; useful-action range corrected to 4..r+4",
+    "public_protocol_source_audit": "five immutable source facts distinguish individual ACK, pending count, zero-tested aggregate readiness, and later completion; explicitly not a protocol lift"
+  },
+  "reference_audit": {
+    "cited_records": 33,
+    "scholarly_papers": 31,
+    "author_corrigenda": 1,
+    "pinned_public_artifacts": 1,
+    "same_venue_tc_calibration_papers": 12,
+    "all_bibliography_keys_cited": true,
+    "all_audit_rows_pass": true,
+    "newest_accepted_work_overread": false
+  },
+  "manuscript_checks": {
+    "status": "PASS",
+    "main_pdf_pages": 12,
+    "supplement_pdf_pages": 3,
+    "references_in_main_page_count": true,
+    "page_size": "US letter",
+    "main_double_column": true,
+    "overfull_boxes_found": false,
+    "broken_cross_references_or_citations_found": false,
+    "publisher_class_byte_identical_to_supplied_template": true,
+    "publisher_bibliography_style_byte_identical_to_supplied_template": true,
+    "template_margin_font_or_spacing_manipulation": false,
+    "ghostscript_parse": "PASS for main.pdf and supplement.pdf",
+    "fonts_embedded": true,
+    "text_extractable": true,
+    "replacement_glyphs_found": false,
+    "pages_rendered_and_inspected": 15,
+    "render_dpi": 200,
+    "clipping_overlap_or_missing_glyphs_observed": false,
+    "qpdf_note": "qpdf was not installed; Ghostscript nullpage parsing, Poppler metadata/font/text checks, LaTeX log gates, and full-page rendering were used instead.",
+    "byte_identical_repeated_builds": true,
+    "source_date_epoch": 1789862400,
+    "fixed_creation_date_utc": "2026-09-20 00:00:00",
+    "final_reference_page_normal_baseline": true,
+    "byte_identical_clean_archive_rebuild": true
+  }
+}

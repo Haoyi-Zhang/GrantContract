@@ -1,0 +1,76 @@
+{
+  "status": "NONCOMPLIANT_CUMULATIVE_ENUMERATION_BUDGET",
+  "accounting_basis": "Preserve all disclosed scientific-enumeration charges. Do not infer compliance from fast runtime or passing tests. TeX compilation, file copying, and visual inspection are non-enumerative. Identifiable full-universe invocations are charged at their declared minimum; unmetered partial development/test invocations prevent an exact all-in total.",
+  "original_campaign_ceiling_obligations": 100000,
+  "original_known_charge_before_completion": 108118,
+  "original_minimum_excess": 8118,
+  "prospective_completion_ceiling_obligations": 160000,
+  "documented_account_before_later_replay": 153247,
+  "later_full_replay_charge_not_in_that_account": 14568,
+  "known_conservative_lower_bound": 206552,
+  "minimum_excess_over_prospective_ceiling": 46552,
+  "exact_all_in_total_known": false,
+  "remaining_reserve_claimed": false,
+  "why_exact_total_is_unknown": "The preserved chronology counts every identifiable full-universe invocation at its declared minimum, but several partial development/test invocations were not individually metered. The correct statement is therefore a conservative lower bound, not a fabricated exact total.",
+  "final_revision": {
+    "full_reproduce_executed": false,
+    "retained_scientific_outputs_expanded": true,
+    "validation_actions": [
+      "69-test deterministic suite in the working tree",
+      "69-test deterministic suite from a clean extraction of the full project archive candidate",
+      "69-test deterministic suite from a clean extraction of the standalone artifact archive candidate",
+      "parsed-value verification of eleven retained stable outputs in all three environments",
+      "five-fact immutable public-source audit and 33-record reference-audit gate",
+      "clean 12-page main and 3-page companion rebuild with byte-identical PDF output",
+      "200-dpi full-page render inspection and PDF/font/text/parse preflight"
+    ],
+    "reason_no_new_full_replay": "The cumulative campaign was already noncompliant; the final work validates retained results and code paths without creating another output directory through reproduce.py."
+  },
+  "retained_prior_clean_replay": {
+    "counted_obligations": 14568,
+    "cpu_seconds_after_imports": 1.3812505599999998,
+    "wall_seconds_after_imports": 1.3813644950000707,
+    "peak_rss_kib": 97836,
+    "workers": 1,
+    "network_requests": 0,
+    "randomness": "none; exhaustive lexicographic enumeration"
+  },
+  "limits": {
+    "per_run_counted_obligations_ceiling": 100000,
+    "per_run_process_cpu_seconds": 120,
+    "per_run_address_space_bytes": 2500000000,
+    "workers": 1,
+    "final_project_archive_target_bytes": 134217728
+  },
+  "interpretation": "The budget violation is a process noncompliance. It is not evidence for or against the mathematical results, and it is not mentioned in the reviewer-facing manuscript.",
+  "post_disclosure_charges_included_in_lower_bound": {
+    "three_metaoracle_development_invocations": {
+      "invocations": 3,
+      "minimum_each": 4395,
+      "subtotal": 13185
+    },
+    "prior_full_validation_suite": {
+      "invocations": 1,
+      "minimum_each": 6388,
+      "subtotal": 6388,
+      "basis": "one complete tiny-plant meta-oracle plus one complete parameterized study; smaller repeated checks are not charged here"
+    },
+    "final_worktree_validation_suite": {
+      "invocations": 1,
+      "minimum_each": 6388,
+      "subtotal": 6388
+    },
+    "clean_full_project_validation_suite": {
+      "invocations": 1,
+      "minimum_each": 6388,
+      "subtotal": 6388
+    },
+    "clean_standalone_repository_validation_suite": {
+      "invocations": 1,
+      "minimum_each": 6388,
+      "subtotal": 6388
+    },
+    "post_disclosure_subtotal": 38737,
+    "derivation": "167815 + 13185 + 4*6388 = 206552"
+  }
+}
