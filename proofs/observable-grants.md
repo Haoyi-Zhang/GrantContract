@@ -115,30 +115,45 @@ only an existence result.
    every `q in X` with no uncontrollable successor.  It succeeds exactly when
    every such `X` is grantable.
 
-Let `n` and `m` be the numbers of reachable pre-grant states and edges, let `n_post` and `m_post` be the post-grant state and edge counts, let
-`s=|Sigma|`, and let `N` be the number of reachable observer subsets
-(`N <= 2^n`).  With adjacency lists and precomputed hidden closures, the
-construction is linear in the explicit post-grant DAG and polynomial in the
-explicit observer: a straightforward implementation uses
-`O(n_post + m_post + N*s*(n+m))` time and
-`O(n_post + m_post + N*n)` space.
-The exponential worst case is the usual subset-observer cost; the bridge family
-below admits a closed form and does not require enumerating all `2^n` subsets.
-`src/contracts.py` implements this construction independently of the specialized
-bridge analyzer and rejects cyclic, phase-overlapping, pre-grant-good, or
+Let `n` be the reachable pre-grant state count and `m` all reachable
+pre-grant uncontrollable edges, hidden and visible.  Let `n_post,m_post` be the
+post-grant state/edge counts, `g` the grant-edge count, `s=|Sigma|`, `N` the
+number of reachable observer beliefs (`N <= 2^n`), `R <= N*s` the number of
+stored observer edges, and `V <= N*n` the number of returned quiescent-violation
+pairs.  The delivered implementation scans the global alphabet at each belief,
+interns each belief once, materializes both returned lists, and sorts them
+deterministically.  With `B=n+n_post+m+m_post+g+s*log(s+1)`, conservative bounds
+for this implementation are
+
+`O(B + N*s*(n+m) + (R+V)*n*log(N*s+n+1))` time and
+`O(B + N*n + R + V) = O(B + N*n + R)` space.
+
+The `B` term includes initial hidden closure and pre-grant processing even when
+`s=0`.  Belief residency is charged once through canonical interning; observer
+edges reference resident beliefs, while the explicit violation list contributes
+`V`.  Sorting either output may compare belief keys of size at most `n`.  A
+streaming interface could avoid these returned lists, but that is not the
+delivered Python behavior.  A hidden-only two-state plant and a two-state/
+32-label family exercise the `s=0` and large-alphabet edge/storage corners.  The
+exponential worst case remains the usual subset-observer cost.
+`src/contracts.py` rejects cyclic, phase-overlapping, pre-grant-good, or
 multi-grant inputs.
 
 ### Exhaustive tiny-plant meta-oracle
 
 `src/metaoracle.py` attacks the implementation with a differently structured
-brute-force oracle.  It enumerates a declared universe of 486 acyclic plants
-with two pre-grant and two post-grant states, all 1,188 contracts over their
-reachable histories, every maximal controlled path, and all 75 canonical
-receipt partitions through bound four.  It compares the synthesized kernel,
-observer, greatest contract, and nonblocking decision with direct path
-semantics.  All comparisons agree; existential-fiber and ignored-eligibility
-mutants are rejected on 64 and 180 plants.  This is exhaustive only for that
-tiny universe and is not a proof of the arbitrary finite theorem.
+brute-force oracle.  It enumerates a declared universe of 486 acyclic generic
+plants with two pre-grant and two post-grant states, all 1,188 contracts over
+their reachable histories, and every maximal controlled path.  Direct path
+semantics compares the synthesized kernel, observer, greatest contract, and
+nonblocking decision.  Separately, each of the 75 canonical receipt partitions
+through bound four is used to construct an actual raw-timing plant whose ack
+edges are labelled by that partition; direct history/path analysis and the
+generic observer agree without calling the closed-form receipt helper.  The
+meta-oracle also records the finite L1--L4 eligibility counterexample and the
+`s=0`/32-label complexity sanity families.  Existential-fiber and
+ignored-eligibility mutants are rejected on 64 and 180 generic plants.  These
+checks are finite corroboration, not a proof of the arbitrary finite theorem.
 
 ## 4. Exact feasibility of safety plus completion
 
@@ -379,17 +394,36 @@ pre-grant states.  The required obligations are:
    contract enables it, the corresponding concrete grant is enabled and maps
    to that edge.
 
+### Small counterexample: obligations 1--4 do not imply eligibility
+
+Take the abstract plant `q --grant--> g`, with `g` good.  Take the concrete
+plant `s0 --hidden--> s1 --grant--> gB`, with `gB` good,
+`alpha(s0)=alpha(s1)=q`, `alpha(gB)=g`, and rank `r(s0)=1`, `r(s1)=0`.
+Initiality, weak simulation, grant preservation, and maximal post-grant
+refinement all hold.  Nevertheless the concrete epsilon-history knowledge set
+is `{s0,s1}` and `s0` has no concrete grant.  Thus obligations 1--4 prove good
+completion only for concrete grants that actually occur; they do not establish
+the eligibility clause of the statewise correctness definition.
+`src/lifting_counterexample.py` checks this finite witness independently.
+
 ### Theorem 7 (conditional refinement rule)
 
-Under obligations 1--4, controlling `B` with `C*` is correct.  If obligations
-5--6 and criterion (NB) also hold, the controlled concrete bridge is
-nonblocking.
+Under obligations 1--4, every concrete grant that actually occurs at a
+`C*`-admitted history has a finite good completion.  Under obligations 1--4
+and 6, the induced concrete observation contract is correct.  If obligation 5,
+criterion (NB), and the same obligation 6 also hold, it is nonblocking.
 
 **Proof.**  Obligations 1--2 and induction over a concrete pre-grant prefix put
 its image in the abstract knowledge set for the same visible history.  If `C*`
-enables grant, Theorem 1 places every possible image in `W`.  Obligations 3--4
-then transfer every concrete maximal post-grant suffix to a good abstract
-suffix and hence to the declared concrete outcome.
+admits the history, every possible image lies in `W`.  For any concrete grant
+that actually occurs, obligations 3--4 transfer every concrete maximal
+post-grant suffix to a finite good abstract suffix and then to the declared
+concrete outcome.  This is actual-grant safety.
+
+For full correctness, fix any concrete state compatible with an admitted
+history.  Its abstract image is grantable in `W`; obligation 6 supplies the
+matching concrete grant, and the preceding actual-grant argument supplies its
+good completion.
 
 For nonblocking, consider an infinite concrete pre-grant path.  Every nonempty
 matching abstract segment advances in the finite acyclic abstract plant, so
@@ -397,9 +431,9 @@ only finitely many such segments can occur.  All later concrete steps would
 match empty abstract paths, but obligation 2 would make the natural rank
 strictly decrease forever, a contradiction.  Therefore a maximal concrete
 pre-grant path is finite.  At its last state, obligation 5 gives an abstract
-environment-quiescent state at the same history.  Criterion (NB) puts the whole
-knowledge set inside `W`, so `C*` enables the abstract grant.  Obligation 6 then
-enables a concrete grant, contradicting maximality.  QED.
+environment-quiescent state at the same history.  Criterion (NB) admits that
+history, and obligation 6 enables a concrete grant, contradicting maximality.
+QED.
 
 ### Proposition 8 (owned `K=1` encoding isomorphism)
 
@@ -411,20 +445,23 @@ slice of `src/parametric_bridge.py` under
 \beta(f,a,c,p,t)=(f,a,c,p,t).
 \]
 
-The map is a bijection on reachable states, preserves and reflects every
-uncontrollable edge, grant edge, visible receipt, good terminal, and quiescent
-state.  Hence all six obligations hold with no stutter, and the exact contract
-computed for the count model transfers to the detailed model.
+The map is a bijection on reachable states.  Both encodings now emit the shared
+receipt alphabet `ack:0`,`ack:+`.  Equivalently, for the earlier detailed
+spelling define `lambda(ack:1)=ack:+` and let `lambda` be identity on all other
+labels.  Under this map the isomorphism preserves and reflects every
+uncontrollable edge, grant edge, complete visible history, knowledge set,
+greatest-contract permission, good terminal, and quiescent state.  Hence all
+six obligations hold with no stutter.
 
 **Proof.**  The initial sets are the two tuples with `p=0` and `p=1`.  A case
 split over flag, fill, acknowledgment, grant, and read shows identical guards
-and field updates in both encodings for each mechanism.  The interface label is
-a pure function of the action and target `p`, so it is also preserved.  The
-same edge correspondence preserves terminal phase, grant availability, and
-absence of uncontrollable successors.  The artifact compares the complete
-reachable edge sets for all five mechanisms; the mathematical argument is the
-preceding action-by-action identity, not an inference from the finite count.
-QED.
+and field updates in both encodings for each mechanism.  Receipt labels are
+determined by the target `p` under the shared alphabet (or by `lambda` under
+the legacy spelling).  The artifact compares all visible pre-grant labels, the
+complete history-to-knowledge maps, and the admitted-history sets for five
+mechanisms and two interfaces.  A deliberately wrong map from `ack:+` to
+`ack:1` is rejected.  The same edge correspondence preserves terminal phase,
+grant availability, and quiescence.  QED.
 
 This proposition closes the lifting rule for two owned encodings and supports
 the MP trace map.  It is not a simulation from CXL, MemGlue, C3, vCXLGen,

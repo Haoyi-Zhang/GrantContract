@@ -8,7 +8,7 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from metaoracle import _rgs_partitions  # noqa: E402
+from metaoracle import _rgs_partitions, evaluate_receipt_partition_plant  # noqa: E402
 from parametric_bridge import raw_receipt_partition_is_complete  # noqa: E402
 
 
@@ -35,6 +35,19 @@ class ReceiptPartitionTests(unittest.TestCase):
                     expected,
                     msg=(bound, symbols),
                 )
+
+    def test_all_partitions_are_checked_on_actual_rho_labelled_plants(self) -> None:
+        checked = 0
+        for bound in range(5):
+            for partition in _rgs_partitions(bound + 1):
+                row = evaluate_receipt_partition_plant(bound, partition)
+                expected = all(partition[pending] != partition[0]
+                               for pending in range(1, bound + 1))
+                self.assertTrue(row["exact"], msg=(bound, partition, row))
+                self.assertEqual(row["direct_nonblocking_exists"], expected)
+                self.assertEqual(row["generic_nonblocking_exists"], expected)
+                checked += 1
+        self.assertEqual(checked, 75)
 
     def test_invalid_symbol_vector_is_rejected(self) -> None:
         with self.assertRaises(ValueError):

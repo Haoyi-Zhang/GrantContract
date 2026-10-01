@@ -5,7 +5,8 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from parametric_bridge import (CountState, analyze_contract, audit_contract_rows,
+from parametric_bridge import (CountState, analyze_contract,
+                               audit_contract_rows, audit_k1_observation_isomorphism,
                                forced_grant_safe, grant_formula, observation,
                                oracle_edges, reachable_graph, run_parametric,
                                transitions)
@@ -83,6 +84,26 @@ class ParametricBridgeTests(unittest.TestCase):
     def test_no_new_stale_traffic(self):
         state = CountState(flag=1, invalidated=1, old_cache=0, pending=0)
         self.assertNotIn("fill", [action for action, _ in transitions(state, "raw")])
+
+
+    def test_k1_observation_isomorphism_checks_labels_beliefs_and_permissions(self):
+        result = audit_k1_observation_isomorphism()
+        self.assertTrue(result["exact"])
+        self.assertEqual(result["cases_checked"], 10)
+        self.assertEqual(result["label_mismatches"], 0)
+        self.assertEqual(result["knowledge_mismatches"], 0)
+        self.assertEqual(result["permission_mismatches"], 0)
+
+    def test_wrong_receipt_label_map_is_rejected(self):
+        result = audit_k1_observation_isomorphism(
+            lambda label: "ack:1" if label == "ack:+" else label
+        )
+        self.assertFalse(result["exact"])
+        self.assertGreater(result["label_mismatches"], 0)
+        self.assertTrue(
+            result["knowledge_mismatches"] > 0
+            or result["permission_mismatches"] > 0
+        )
 
     def test_complete_bounded_study(self):
         result = run_parametric(4)

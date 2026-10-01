@@ -19061,13 +19061,15 @@
       "unsafe_grant_history_count": 0
     }
   ],
-  "counted_obligations": 1993,
-  "counting_note": "One obligation per reachable edge compared with the tuple oracle, eligible-state guard comparison, observable history compared by two constructions and audited for exact safe permission, closed-form contract prediction, K=1 edge refinement, and receipt lower-bound witness.",
+  "counted_obligations": 2024,
+  "counting_note": "One obligation per reachable edge compared with the tuple oracle, eligible-state guard comparison, observable history compared by two constructions and audited for exact safe permission, closed-form contract prediction, K=1 edge refinement, and receipt lower-bound witness, three observation-isomorphism checks per K=1 mechanism/interface, and one deliberately wrong receipt-label map.",
   "counts": {
     "contract_prediction_obligations": 50,
     "edge_oracle_obligations": 1215,
     "grant_kernel_obligations": 170,
     "history_oracle_obligations": 554,
+    "observation_isomorphism_obligations": 30,
+    "observation_label_mutant_obligations": 1,
     "receipt_lower_bound_obligations": 4
   },
   "grant_kernel_mismatches": 0,
@@ -19076,6 +19078,115 @@
     "bare",
     "zero_receipt"
   ],
+  "k1_observation_isomorphism": {
+    "cases": [
+      {
+        "history_count": 9,
+        "interface": "bare",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "raw",
+        "permission_count": 3,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 15
+      },
+      {
+        "history_count": 12,
+        "interface": "zero_receipt",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "raw",
+        "permission_count": 5,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 15
+      },
+      {
+        "history_count": 5,
+        "interface": "bare",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "drain",
+        "permission_count": 2,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 7
+      },
+      {
+        "history_count": 5,
+        "interface": "zero_receipt",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "drain",
+        "permission_count": 2,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 7
+      },
+      {
+        "history_count": 5,
+        "interface": "bare",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "generation",
+        "permission_count": 2,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 12
+      },
+      {
+        "history_count": 8,
+        "interface": "zero_receipt",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "generation",
+        "permission_count": 4,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 12
+      },
+      {
+        "history_count": 9,
+        "interface": "bare",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "late_generation",
+        "permission_count": 3,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 15
+      },
+      {
+        "history_count": 12,
+        "interface": "zero_receipt",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "late_generation",
+        "permission_count": 5,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 15
+      },
+      {
+        "history_count": 5,
+        "interface": "bare",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "no_repair",
+        "permission_count": 0,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 13
+      },
+      {
+        "history_count": 8,
+        "interface": "zero_receipt",
+        "knowledge_sets_match": true,
+        "labels_match": true,
+        "mechanism": "no_repair",
+        "permission_count": 2,
+        "permitted_histories_match": true,
+        "pregrant_labeled_edge_count": 13
+      }
+    ],
+    "cases_checked": 10,
+    "exact": true,
+    "knowledge_mismatches": 0,
+    "label_mismatches": 0,
+    "permission_mismatches": 0
+  },
   "maximum_pending_bound": 4,
   "mechanisms": [
     "raw",
@@ -19302,5 +19413,11 @@
   },
   "receipt_lower_bound_bits": 1,
   "scope": "One producer, one consumer, one release/acquire episode, one data line, and an initial stale-response count in [0,K]. No transition creates new stale traffic.",
-  "transition_oracle_mismatches": 0
+  "transition_oracle_mismatches": 0,
+  "wrong_label_mapping_mismatch_counts": {
+    "knowledge": 4,
+    "labels": 4,
+    "permissions": 3
+  },
+  "wrong_label_mapping_rejected": true
 }

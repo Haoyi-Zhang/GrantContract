@@ -33,6 +33,25 @@ class MetaOracleTests(unittest.TestCase):
         self.assertGreater(self.summary["eligibility_mutant_counterexamples"], 0)
         self.assertIsNotNone(self.summary["first_existential_mutant_witness"])
 
+    def test_receipt_partitions_use_explicit_labelled_plants(self):
+        self.assertEqual(self.summary["receipt_plant_mismatches"], 0)
+        rows = self.summary["receipt_partition_results"]
+        self.assertEqual(len(rows), 75)
+        self.assertTrue(all(row["exact"] for row in rows))
+        self.assertTrue(all(
+            row["direct_nonblocking_exists"] == row["zero_isolated"]
+            for row in rows
+        ))
+
+    def test_l1_l4_counterexample_and_complexity_sanity(self):
+        witness = self.summary["lifting_counterexample"]
+        self.assertTrue(witness["L1_through_L4"])
+        self.assertTrue(witness["actual_grant_safety"])
+        self.assertFalse(witness["L6"])
+        self.assertFalse(witness["full_correctness"])
+        self.assertEqual(witness["ineligible_in_epsilon"], ["s0"])
+        self.assertTrue(self.summary["complexity_sanity"]["exact"])
+
 
 if __name__ == "__main__":
     unittest.main()

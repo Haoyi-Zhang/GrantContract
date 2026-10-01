@@ -206,7 +206,11 @@ def synthesize(plant: OneShotPlant) -> SynthesisResult:
                        for label, _ in uncontrollable[source]
                        if label is not None})
     initial_belief = hidden_closure(plant.initial)
-    beliefs = {initial_belief}
+    # Intern beliefs so each stored observer edge points to the canonical
+    # frozenset already resident in the observer.  This makes the documented
+    # O(N*n + R) observer-storage convention true rather than retaining an
+    # equal-but-distinct target set on every edge.
+    belief_intern = {initial_belief: initial_belief}
     queue = deque([initial_belief])
     observer_edges: set[tuple[frozenset[State], str, frozenset[State]]] = set()
     while queue:
@@ -219,11 +223,14 @@ def synthesize(plant: OneShotPlant) -> SynthesisResult:
             }
             if not targets:
                 continue
-            target_belief = hidden_closure(targets)
-            observer_edges.add((belief, label, target_belief))
-            if target_belief not in beliefs:
-                beliefs.add(target_belief)
+            candidate = hidden_closure(targets)
+            target_belief = belief_intern.get(candidate)
+            if target_belief is None:
+                target_belief = candidate
+                belief_intern[target_belief] = target_belief
                 queue.append(target_belief)
+            observer_edges.add((belief, label, target_belief))
+    beliefs = set(belief_intern)
 
     permitted = frozenset(belief for belief in beliefs if belief <= kernel)
     violations: list[tuple[State, frozenset[State]]] = []

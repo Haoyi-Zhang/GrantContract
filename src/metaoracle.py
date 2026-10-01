@@ -17,7 +17,7 @@ from itertools import combinations, product
 from typing import Iterable, Iterator
 
 from contracts import OneShotPlant, synthesize
-from parametric_bridge import raw_receipt_partition_is_complete
+from lifting_counterexample import evaluate_l1_l4_counterexample
 
 PRE = ("p0", "p1")
 POST = ("t0", "t1")
@@ -95,20 +95,21 @@ def _maps(plant: OneShotPlant):
     return adjacency, grants
 
 
-def _history_fibers(plant: OneShotPlant) -> dict[tuple[str, ...], frozenset[str]]:
-    """Enumerate reachable pre-grant state/history pairs without subset DP."""
+def _history_fibers(plant: OneShotPlant) -> dict[tuple[str, ...], frozenset[object]]:
+    """Enumerate reachable pre-grant state/history pairs without subset DP.
+
+    The walk never takes a grant edge.  Phase separation in :class:`OneShotPlant`
+    therefore keeps it in the pre-grant region for both the tiny generic plants
+    and the receipt-labelled raw bridge plants constructed below.
+    """
     adjacency, _ = _maps(plant)
     todo = [(state, ()) for state in plant.initial]
     seen = set(todo)
-    fibers: dict[tuple[str, ...], set[str]] = {}
+    fibers: dict[tuple[str, ...], set[object]] = {}
     while todo:
         state, history = todo.pop()
-        if state not in PRE:
-            raise AssertionError("generated pre-grant walk escaped PRE")
         fibers.setdefault(history, set()).add(state)
         for label, target in adjacency[state]:
-            if target not in PRE:
-                raise AssertionError("generated pre edge entered post region without grant")
             next_history = history if label is None else history + (label,)
             pair = (target, next_history)
             if pair not in seen:
@@ -187,6 +188,191 @@ def _all_contracts(histories: tuple[tuple[str, ...], ...]) -> Iterator[frozenset
     yield from _powerset(histories)
 
 
+def _raw_receipt_plant(bound: int, partition: tuple[int, ...]) -> OneShotPlant:
+    """Construct the actual raw-timing plant labelled by a receipt partition.
+
+    This constructor intentionally does not call the closed-form receipt helper.
+    ``partition[p]`` is the receipt class emitted when ``p`` old responses remain
+    after the atomic clear/sample step.
+    """
+    if type(bound) is not int or bound < 0:
+        raise ValueError("bound must be a nonnegative integer")
+    if len(partition) != bound + 1:
+        raise ValueError("partition must provide one class per pending count")
+
+    initial = frozenset((0, 0, 1, pending, 0) for pending in range(bound + 1))
+    seen = set(initial)
+    todo = list(initial)
+    uncontrollable: list[tuple[object, str | None, object]] = []
+    grants: list[tuple[object, object]] = []
+    while todo:
+        f, a, c, pending, phase = state = todo.pop()
+        successors: list[tuple[str, object]] = []
+        if phase < 2:
+            if not f:
+                successors.append(("flag", (1, a, c, pending, phase)))
+            if pending:
+                successors.append(("fill", (f, a, 1, pending - 1, phase)))
+            if (not a) or c:
+                successors.append(("ack", (f, 1, 0, pending, phase)))
+            if phase == 0 and f:
+                successors.append(("grant", (f, a, c, pending, 1)))
+            if phase == 1:
+                successors.append(("read0" if c else "read1",
+                                   (f, a, c, pending, 2 if c else 3)))
+        for action, target in successors:
+            if action == "grant":
+                grants.append((state, target))
+            else:
+                if phase == 0:
+                    if action == "fill":
+                        label = None
+                    elif action == "ack":
+                        label = f"ack:{partition[pending]}"
+                    else:
+                        label = action
+                else:
+                    label = None
+                uncontrollable.append((state, label, target))
+            if target not in seen:
+                seen.add(target)
+                todo.append(target)
+
+    good = frozenset(state for state in seen if state[-1] == 3)
+    return OneShotPlant(
+        initial=initial,
+        uncontrollable=tuple(uncontrollable),
+        grants=tuple(grants),
+        good_terminals=good,
+    )
+
+
+def evaluate_receipt_partition_plant(bound: int, partition: tuple[int, ...]) -> dict[str, object]:
+    """Evaluate one rho-labelled raw plant without the closed-form helper."""
+    plant = _raw_receipt_plant(bound, partition)
+    fibers = _history_fibers(plant)
+    histories = tuple(sorted(fibers, key=lambda h: (len(h), h)))
+    reachable_pre = frozenset(state for states in fibers.values() for state in states)
+    safe_states = _safe_grant_states(plant, reachable_pre)
+    safe_histories = frozenset(
+        history for history, states in fibers.items() if states <= safe_states
+    )
+
+    adjacency, _ = _maps(plant)
+    quiescent_pairs = [
+        (state, history)
+        for history, states in fibers.items()
+        for state in states
+        if not adjacency[state]
+    ]
+    direct_nonblocking_exists = all(
+        fibers[history] <= safe_states for state, history in quiescent_pairs
+    )
+    direct_path_nonblocking = _contract_nonblocking(plant, safe_histories)
+
+    generic = synthesize(plant)
+    generic_permissions = frozenset(
+        history for history, belief in fibers.items()
+        if belief in generic.permitted_beliefs
+    )
+    zero_isolated = all(
+        partition[pending] != partition[0]
+        for pending in range(1, bound + 1)
+    )
+    exact = all((
+        direct_nonblocking_exists == direct_path_nonblocking,
+        generic.kernel == safe_states,
+        generic.observer_states == frozenset(fibers.values()),
+        generic_permissions == safe_histories,
+        generic.nonblocking_exists == direct_nonblocking_exists,
+        direct_nonblocking_exists == zero_isolated,
+    ))
+    first_blocker = None
+    if not direct_nonblocking_exists:
+        candidates = [
+            (history, state)
+            for state, history in quiescent_pairs
+            if not fibers[history] <= safe_states
+        ]
+        if candidates:
+            history, state = min(candidates, key=lambda item: (len(item[0]), item[0], repr(item[1])))
+            first_blocker = {
+                "history": list(history),
+                "state": list(state),
+                "fiber_size": len(fibers[history]),
+            }
+    return {
+        "bound": bound,
+        "partition": list(partition),
+        "zero_isolated": zero_isolated,
+        "direct_nonblocking_exists": direct_nonblocking_exists,
+        "direct_path_nonblocking": direct_path_nonblocking,
+        "generic_nonblocking_exists": generic.nonblocking_exists,
+        "history_count": len(histories),
+        "observer_state_count": len(generic.observer_states),
+        "safe_history_count": len(safe_histories),
+        "first_blocker": first_blocker,
+        "exact": exact,
+    }
+
+
+def _complexity_sanity_cases() -> dict[str, object]:
+    """Exercise the s=0 and large-alphabet edge/storage corner cases."""
+    hidden_only = OneShotPlant(
+        initial=frozenset({"p0"}),
+        uncontrollable=(("p0", None, "p1"),),
+        grants=(("p0", "g0"), ("p1", "g1")),
+        good_terminals=frozenset({"g0", "g1"}),
+    )
+    hidden_result = synthesize(hidden_only)
+
+    labels = tuple(f"ell-{index}" for index in range(32))
+    multi_label = OneShotPlant(
+        initial=frozenset({"u0"}),
+        uncontrollable=tuple(("u0", label, "u1") for label in labels),
+        grants=(("u0", "v0"), ("u1", "v1")),
+        good_terminals=frozenset({"v0", "v1"}),
+    )
+    multi_result = synthesize(multi_label)
+    result = {
+        "hidden_only": {
+            "visible_alphabet_size": 0,
+            "pregrant_edge_count": 1,
+            "observer_state_count": len(hidden_result.observer_states),
+            "observer_edge_count": len(hidden_result.observer_transitions),
+            "initial_belief_size": len(next(iter(hidden_result.observer_states))),
+        },
+        "two_state_multi_label": {
+            "visible_alphabet_size": len(labels),
+            "pregrant_edge_count": len(labels),
+            "observer_state_count": len(multi_result.observer_states),
+            "observer_edge_count": len(multi_result.observer_transitions),
+        },
+    }
+    expected = {
+        "hidden_only": (0, 1, 1, 0, 2),
+        "two_state_multi_label": (32, 32, 2, 32),
+    }
+    actual_hidden = (
+        result["hidden_only"]["visible_alphabet_size"],
+        result["hidden_only"]["pregrant_edge_count"],
+        result["hidden_only"]["observer_state_count"],
+        result["hidden_only"]["observer_edge_count"],
+        result["hidden_only"]["initial_belief_size"],
+    )
+    actual_multi = (
+        result["two_state_multi_label"]["visible_alphabet_size"],
+        result["two_state_multi_label"]["pregrant_edge_count"],
+        result["two_state_multi_label"]["observer_state_count"],
+        result["two_state_multi_label"]["observer_edge_count"],
+    )
+    result["exact"] = (
+        actual_hidden == expected["hidden_only"]
+        and actual_multi == expected["two_state_multi_label"]
+    )
+    return result
+
+
 @dataclass(frozen=True)
 class MetaOracleSummary:
     plants_checked: int
@@ -201,6 +387,10 @@ class MetaOracleSummary:
     plants_with_nonblocking_contract: int
     first_existential_mutant_witness: dict[str, object] | None
     receipt_partitions_by_bound: dict[str, int]
+    receipt_plant_mismatches: int
+    receipt_partition_results: tuple[dict[str, object], ...]
+    lifting_counterexample: dict[str, object]
+    complexity_sanity: dict[str, object]
 
     @property
     def counted_obligations(self) -> int:
@@ -208,6 +398,8 @@ class MetaOracleSummary:
             self.plants_checked * 4
             + self.contract_candidates_checked * 2
             + self.receipt_partitions_checked
+            + 6  # L1--L4, L6 failure, and full-correctness failure
+            + 2  # hidden-only and multi-label complexity sanity families
         )
 
     def as_dict(self) -> dict[str, object]:
@@ -225,6 +417,10 @@ class MetaOracleSummary:
             "contract_candidates_checked": self.contract_candidates_checked,
             "receipt_partitions_checked": self.receipt_partitions_checked,
             "receipt_partitions_by_bound": self.receipt_partitions_by_bound,
+            "receipt_plant_mismatches": self.receipt_plant_mismatches,
+            "receipt_partition_results": list(self.receipt_partition_results),
+            "lifting_counterexample": self.lifting_counterexample,
+            "complexity_sanity": self.complexity_sanity,
             "kernel_mismatches": self.kernel_mismatches,
             "observer_mismatches": self.observer_mismatches,
             "greatest_contract_mismatches": self.greatest_contract_mismatches,
@@ -235,8 +431,9 @@ class MetaOracleSummary:
             "first_existential_mutant_witness": self.first_existential_mutant_witness,
             "counted_obligations": self.counted_obligations,
             "scope": (
-                "Exhaustive finite meta-check over the declared two-pre/two-post-state universe; "
-                "not a proof of the arbitrary finite theorem and not a protocol evaluation."
+                "Exhaustive finite meta-check over the declared two-pre/two-post-state universe, "
+                "plus 75 explicitly receipt-labelled raw plants through K=4; not a proof of the "
+                "arbitrary finite theorem and not a protocol evaluation."
             ),
         }
 
@@ -317,16 +514,20 @@ def run_metaoracle(max_receipt_bound: int = 4) -> dict[str, object]:
 
     receipt_counts: dict[str, int] = {}
     receipt_checked = 0
+    receipt_rows: list[dict[str, object]] = []
+    receipt_plant_mismatches = 0
     for bound in range(max_receipt_bound + 1):
         count = 0
         for partition in _rgs_partitions(bound + 1):
-            expected = all(partition[p] != partition[0] for p in range(1, bound + 1))
-            actual = raw_receipt_partition_is_complete(bound, partition)
-            if actual != expected:
-                raise AssertionError(("receipt partition mismatch", bound, partition))
+            row = evaluate_receipt_partition_plant(bound, partition)
+            receipt_rows.append(row)
+            receipt_plant_mismatches += int(not bool(row["exact"]))
             count += 1
         receipt_counts[str(bound)] = count
         receipt_checked += count
+
+    lifting = evaluate_l1_l4_counterexample()
+    complexity = _complexity_sanity_cases()
 
     summary = MetaOracleSummary(
         plants_checked=plants_checked,
@@ -341,9 +542,19 @@ def run_metaoracle(max_receipt_bound: int = 4) -> dict[str, object]:
         plants_with_nonblocking_contract=nonblocking_plants,
         first_existential_mutant_witness=first_witness,
         receipt_partitions_by_bound=receipt_counts,
+        receipt_plant_mismatches=receipt_plant_mismatches,
+        receipt_partition_results=tuple(receipt_rows),
+        lifting_counterexample=lifting,
+        complexity_sanity=complexity,
     )
-    if any((kernel_mismatches, observer_mismatches, greatest_mismatches, nonblocking_mismatches)):
+    if any((kernel_mismatches, observer_mismatches, greatest_mismatches,
+            nonblocking_mismatches, receipt_plant_mismatches)):
         raise AssertionError(summary.as_dict())
     if not existential_counterexamples or not eligibility_counterexamples:
         raise AssertionError("meta-oracle universe failed to kill required mutants")
+    if not (lifting["L1_through_L4"] and lifting["actual_grant_safety"]
+            and not lifting["L6"] and not lifting["full_correctness"]):
+        raise AssertionError(("lifting counterexample failed", lifting))
+    if not complexity["exact"]:
+        raise AssertionError(("complexity sanity failed", complexity))
     return summary.as_dict()

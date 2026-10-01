@@ -124,7 +124,8 @@ def all_continuations_safe(s:State,mechanism:str)->bool:
 def symbol(action:str,after:State,policy:str)->str|None:
     if policy not in POLICIES:raise ValueError('unknown policy')
     if action=='fill':return None
-    if action=='ack' and policy=='pending_receipt':return 'ack:'+str(after.old_pending)
+    if action=='ack' and policy=='pending_receipt':
+        return 'ack:0' if after.old_pending==0 else 'ack:+'
     return action
 
 

@@ -2611,7 +2611,7 @@
         ],
         "initial_old_pending": 1,
         "observations": [
-          "ack:1",
+          "ack:+",
           "ack:0",
           "flag",
           "grant",
@@ -2644,7 +2644,7 @@
         ],
         "initial_old_pending": 1,
         "observations": [
-          "ack:1",
+          "ack:+",
           "flag",
           "ack:0",
           "grant",
@@ -2677,7 +2677,7 @@
         ],
         "initial_old_pending": 1,
         "observations": [
-          "ack:1",
+          "ack:+",
           "flag",
           "ack:0",
           "grant",
@@ -2771,7 +2771,7 @@
         "initial_old_pending": 1,
         "observations": [
           "flag",
-          "ack:1",
+          "ack:+",
           "ack:0",
           "grant",
           "read1"
@@ -4279,7 +4279,7 @@
       ],
       "initial_old_pending": 1,
       "observations": [
-        "ack:1",
+        "ack:+",
         "flag"
       ],
       "outcome": "blocked",
@@ -4357,7 +4357,7 @@
         ],
         "initial_old_pending": 1,
         "observations": [
-          "ack:1",
+          "ack:+",
           "flag"
         ],
         "outcome": "blocked",
@@ -4378,7 +4378,7 @@
         ],
         "initial_old_pending": 1,
         "observations": [
-          "ack:1",
+          "ack:+",
           "flag"
         ],
         "outcome": "blocked",
@@ -4460,7 +4460,7 @@
         "initial_old_pending": 1,
         "observations": [
           "flag",
-          "ack:1"
+          "ack:+"
         ],
         "outcome": "blocked",
         "read_source_word": null,

@@ -346,6 +346,137 @@ def analyze_contract(bound: int, mechanism: str, interface: str) -> dict:
     }
 
 
+
+def audit_k1_observation_isomorphism(
+    label_map: Callable[[str], str] | None = None,
+) -> dict[str, object]:
+    """Check the owned K=1 encoding relation at the observation level.
+
+    The physical transition builders are already compared separately.  This
+    audit additionally compares, for every mechanism and both interfaces:
+
+    * the visible label on every pre-grant uncontrollable edge;
+    * the complete history-to-knowledge-set map; and
+    * the histories admitted by the greatest correct contract.
+
+    ``label_map`` is applied to labels emitted by the detailed Boolean model.
+    The delivered encodings use one shared alphabet (``ack:0``/``ack:+``), so
+    the identity map must pass.  Supplying a deliberately wrong map provides a
+    small negative control that must be rejected.
+    """
+    from bridge import (  # local import avoids a module cycle
+        State as BinaryState,
+        all_continuations_safe as binary_suffix_safe,
+        initial_states as binary_initial_states,
+        pregrant_fibers as binary_pregrant_fibers,
+        symbol as binary_symbol,
+        transitions as binary_transitions,
+    )
+
+    normalize = label_map or (lambda label: label)
+    policy_for = {"bare": "receipt", "zero_receipt": "pending_receipt"}
+
+    def binary_tuple(state: BinaryState) -> tuple[int, int, int, int, int]:
+        return (state.flag, state.invalidated, state.old_cache,
+                state.old_pending, state.phase)
+
+    cases: list[dict[str, object]] = []
+    label_mismatches = knowledge_mismatches = permission_mismatches = 0
+    for mechanism in MECHANISMS:
+        for interface in INTERFACES:
+            policy = policy_for[interface]
+
+            # Compare the observation label on each pre-grant environment edge.
+            binary_labeled_edges: set[
+                tuple[tuple[int, ...], str | None, tuple[int, ...]]
+            ] = set()
+            todo = list(binary_initial_states())
+            seen = set(todo)
+            while todo:
+                state = todo.pop()
+                for action, target in binary_transitions(state, mechanism):
+                    if action == "grant":
+                        continue
+                    label = binary_symbol(action, target, policy)
+                    mapped = None if label is None else normalize(label)
+                    binary_labeled_edges.add((binary_tuple(state), mapped, binary_tuple(target)))
+                    if target.phase == 0 and target not in seen:
+                        seen.add(target)
+                        todo.append(target)
+
+            count_labeled_edges: set[
+                tuple[tuple[int, ...], str | None, tuple[int, ...]]
+            ] = set()
+            todo_count = list(initial_states(1))
+            seen_count = set(todo_count)
+            while todo_count:
+                state = todo_count.pop()
+                for action, target in transitions(state, mechanism):
+                    if action == "grant":
+                        continue
+                    label = observation(action, target, interface)
+                    count_labeled_edges.add((state.key(), label, target.key()))
+                    if target.phase == 0 and target not in seen_count:
+                        seen_count.add(target)
+                        todo_count.append(target)
+            label_match = binary_labeled_edges == count_labeled_edges
+            label_mismatches += int(not label_match)
+
+            # Normalize and merge detailed histories before comparing knowledge.
+            detailed_fibers: dict[tuple[str, ...], set[tuple[int, ...]]] = {}
+            for row in binary_pregrant_fibers(mechanism, policy):
+                history = tuple(normalize(label) for label in row["observation"])
+                detailed_fibers.setdefault(history, set()).update(
+                    binary_tuple(BinaryState.decode(code)) for code in row["states"]
+                )
+            detailed_frozen = {
+                history: frozenset(states)
+                for history, states in sorted(detailed_fibers.items())
+            }
+            count_fibers = {
+                history: frozenset(state.key() for state in states)
+                for history, states in knowledge_fibers(1, mechanism, interface).items()
+            }
+            knowledge_match = detailed_frozen == count_fibers
+            knowledge_mismatches += int(not knowledge_match)
+
+            detailed_permissions: set[tuple[str, ...]] = set()
+            for history, tuples in detailed_frozen.items():
+                states = [BinaryState(*values) for values in tuples]
+                if (all(state.flag == 1 and state.phase == 0 for state in states)
+                        and all(binary_suffix_safe(state, mechanism) for state in states)):
+                    detailed_permissions.add(history)
+
+            count_result = analyze_contract(1, mechanism, interface)
+            count_permissions = {
+                tuple(row["history"])
+                for row in count_result["histories"]
+                if row["largest_safe_contract_grants"]
+            }
+            permission_match = detailed_permissions == count_permissions
+            permission_mismatches += int(not permission_match)
+
+            cases.append({
+                "mechanism": mechanism,
+                "interface": interface,
+                "pregrant_labeled_edge_count": len(count_labeled_edges),
+                "history_count": len(count_fibers),
+                "permission_count": len(count_permissions),
+                "labels_match": label_match,
+                "knowledge_sets_match": knowledge_match,
+                "permitted_histories_match": permission_match,
+            })
+
+    return {
+        "cases": cases,
+        "cases_checked": len(cases),
+        "label_mismatches": label_mismatches,
+        "knowledge_mismatches": knowledge_mismatches,
+        "permission_mismatches": permission_mismatches,
+        "exact": not any((label_mismatches, knowledge_mismatches, permission_mismatches)),
+    }
+
+
 def theorem_predictions(bound: int, mechanism: str, interface: str) -> tuple[bool, bool]:
     """Manual closed-form prediction for the bridge-family contract."""
     if bound == 0:
@@ -373,6 +504,8 @@ def run_parametric(max_bound: int = 4) -> dict:
         "history_oracle_obligations": 0,
         "contract_prediction_obligations": 0,
         "receipt_lower_bound_obligations": 0,
+        "observation_isomorphism_obligations": 0,
+        "observation_label_mutant_obligations": 0,
     }
     for bound in range(max_bound + 1):
         for mechanism in MECHANISMS:
@@ -456,6 +589,20 @@ def run_parametric(max_bound: int = 4) -> dict:
             raise AssertionError(("K=1 refinement mismatch", mechanism))
         counts["edge_oracle_obligations"] += len(generalized)
 
+    observation_isomorphism = audit_k1_observation_isomorphism()
+    if not observation_isomorphism["exact"]:
+        raise AssertionError(("K=1 observation isomorphism mismatch", observation_isomorphism))
+    # Three distinct obligations per mechanism/interface: edge labels, complete
+    # knowledge sets, and greatest-contract permission histories.
+    counts["observation_isomorphism_obligations"] = 3 * int(observation_isomorphism["cases_checked"])
+
+    wrong_label_map = audit_k1_observation_isomorphism(
+        lambda label: "ack:1" if label == "ack:+" else label
+    )
+    if wrong_label_map["exact"] or not wrong_label_map["label_mismatches"]:
+        raise AssertionError("wrong receipt-label map was not rejected")
+    counts["observation_label_mutant_obligations"] = 1
+
     raw_bare = next(row for row in contracts
                     if row["bound"] == max_bound and row["mechanism"] == "raw"
                     and row["interface"] == "bare")
@@ -475,6 +622,13 @@ def run_parametric(max_bound: int = 4) -> dict:
         "contract_exactness_mismatches": 0,
         "prediction_mismatches": 0,
         "receipt_lower_bound_bits": 1,
+        "k1_observation_isomorphism": observation_isomorphism,
+        "wrong_label_mapping_rejected": True,
+        "wrong_label_mapping_mismatch_counts": {
+            "labels": wrong_label_map["label_mismatches"],
+            "knowledge": wrong_label_map["knowledge_mismatches"],
+            "permissions": wrong_label_map["permission_mismatches"],
+        },
         "raw_bare_shortest_blocking_witness_at_max_bound": shortest,
         "scope": (
             "One producer, one consumer, one release/acquire episode, one data line, "
@@ -484,7 +638,8 @@ def run_parametric(max_bound: int = 4) -> dict:
             "One obligation per reachable edge compared with the tuple oracle, eligible-state "
             "guard comparison, observable history compared by two constructions and audited for "
             "exact safe permission, closed-form contract prediction, K=1 edge refinement, and receipt "
-            "lower-bound witness."
+            "lower-bound witness, three observation-isomorphism checks per K=1 mechanism/interface, "
+            "and one deliberately wrong receipt-label map."
         ),
     }
     return summary

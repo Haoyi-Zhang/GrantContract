@@ -73,6 +73,29 @@ class ContractSynthesisTests(unittest.TestCase):
         self.assertTrue(mixed)
         self.assertTrue(result.quiescent_violations)
 
+    def test_hidden_only_alphabet_zero_still_processes_initial_closure(self) -> None:
+        plant = OneShotPlant(
+            initial=frozenset({"p0"}),
+            uncontrollable=(("p0", None, "p1"),),
+            grants=(("p0", "g0"), ("p1", "g1")),
+            good_terminals=frozenset({"g0", "g1"}),
+        )
+        result = synthesize(plant)
+        self.assertEqual(result.observer_states, frozenset({frozenset({"p0", "p1"})}))
+        self.assertEqual(result.observer_transitions, ())
+
+    def test_two_state_many_label_edges_are_all_stored(self) -> None:
+        labels = tuple(f"ell-{index}" for index in range(32))
+        plant = OneShotPlant(
+            initial=frozenset({"u0"}),
+            uncontrollable=tuple(("u0", label, "u1") for label in labels),
+            grants=(("u0", "v0"), ("u1", "v1")),
+            good_terminals=frozenset({"v0", "v1"}),
+        )
+        result = synthesize(plant)
+        self.assertEqual(len(result.observer_states), 2)
+        self.assertEqual(len(result.observer_transitions), 32)
+
     def test_rejects_nonterminal_good_state(self) -> None:
         plant = OneShotPlant(
             initial=frozenset({0}),

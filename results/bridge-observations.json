@@ -384,66 +384,7 @@
         "grant_enabled": false,
         "mixed_readiness": false,
         "observation": [
-          "ack:0"
-        ],
-        "prefixes": [
-          {
-            "actions": [
-              "ack"
-            ],
-            "initial_old_pending": 0,
-            "state": 16
-          },
-          {
-            "actions": [
-              "fill",
-              "ack"
-            ],
-            "initial_old_pending": 1,
-            "state": 16
-          }
-        ],
-        "states": [
-          16
-        ],
-        "universally_safe_grant": false
-      },
-      {
-        "grant_enabled": true,
-        "mixed_readiness": false,
-        "observation": [
-          "ack:0",
-          "flag"
-        ],
-        "prefixes": [
-          {
-            "actions": [
-              "ack",
-              "flag"
-            ],
-            "initial_old_pending": 0,
-            "state": 48
-          },
-          {
-            "actions": [
-              "fill",
-              "ack",
-              "flag"
-            ],
-            "initial_old_pending": 1,
-            "state": 48
-          }
-        ],
-        "states": [
-          48
-        ],
-        "universally_safe_grant": true
-      },
-      {
-        "grant_enabled": false,
-        "mixed_readiness": false,
-        "observation": [
-          "ack:1"
+          "ack:+"
         ],
         "prefixes": [
           {
@@ -472,7 +413,7 @@
         "grant_enabled": false,
         "mixed_readiness": false,
         "observation": [
-          "ack:1",
+          "ack:+",
           "ack:0"
         ],
         "prefixes": [
@@ -495,7 +436,7 @@
         "grant_enabled": true,
         "mixed_readiness": false,
         "observation": [
-          "ack:1",
+          "ack:+",
           "ack:0",
           "flag"
         ],
@@ -520,7 +461,7 @@
         "grant_enabled": true,
         "mixed_readiness": false,
         "observation": [
-          "ack:1",
+          "ack:+",
           "flag"
         ],
         "prefixes": [
@@ -561,7 +502,7 @@
         "grant_enabled": true,
         "mixed_readiness": false,
         "observation": [
-          "ack:1",
+          "ack:+",
           "flag",
           "ack:0"
         ],
@@ -582,6 +523,65 @@
               "flag",
               "fill",
               "ack"
+            ],
+            "initial_old_pending": 1,
+            "state": 48
+          }
+        ],
+        "states": [
+          48
+        ],
+        "universally_safe_grant": true
+      },
+      {
+        "grant_enabled": false,
+        "mixed_readiness": false,
+        "observation": [
+          "ack:0"
+        ],
+        "prefixes": [
+          {
+            "actions": [
+              "ack"
+            ],
+            "initial_old_pending": 0,
+            "state": 16
+          },
+          {
+            "actions": [
+              "fill",
+              "ack"
+            ],
+            "initial_old_pending": 1,
+            "state": 16
+          }
+        ],
+        "states": [
+          16
+        ],
+        "universally_safe_grant": false
+      },
+      {
+        "grant_enabled": true,
+        "mixed_readiness": false,
+        "observation": [
+          "ack:0",
+          "flag"
+        ],
+        "prefixes": [
+          {
+            "actions": [
+              "ack",
+              "flag"
+            ],
+            "initial_old_pending": 0,
+            "state": 48
+          },
+          {
+            "actions": [
+              "fill",
+              "ack",
+              "flag"
             ],
             "initial_old_pending": 1,
             "state": 48
@@ -641,47 +641,7 @@
         "mixed_readiness": false,
         "observation": [
           "flag",
-          "ack:0"
-        ],
-        "prefixes": [
-          {
-            "actions": [
-              "flag",
-              "ack"
-            ],
-            "initial_old_pending": 0,
-            "state": 48
-          },
-          {
-            "actions": [
-              "fill",
-              "flag",
-              "ack"
-            ],
-            "initial_old_pending": 1,
-            "state": 48
-          },
-          {
-            "actions": [
-              "flag",
-              "fill",
-              "ack"
-            ],
-            "initial_old_pending": 1,
-            "state": 48
-          }
-        ],
-        "states": [
-          48
-        ],
-        "universally_safe_grant": true
-      },
-      {
-        "grant_enabled": true,
-        "mixed_readiness": false,
-        "observation": [
-          "flag",
-          "ack:1"
+          "ack:+"
         ],
         "prefixes": [
           {
@@ -713,7 +673,7 @@
         "mixed_readiness": false,
         "observation": [
           "flag",
-          "ack:1",
+          "ack:+",
           "ack:0"
         ],
         "prefixes": [
@@ -721,6 +681,46 @@
             "actions": [
               "flag",
               "ack",
+              "fill",
+              "ack"
+            ],
+            "initial_old_pending": 1,
+            "state": 48
+          }
+        ],
+        "states": [
+          48
+        ],
+        "universally_safe_grant": true
+      },
+      {
+        "grant_enabled": true,
+        "mixed_readiness": false,
+        "observation": [
+          "flag",
+          "ack:0"
+        ],
+        "prefixes": [
+          {
+            "actions": [
+              "flag",
+              "ack"
+            ],
+            "initial_old_pending": 0,
+            "state": 48
+          },
+          {
+            "actions": [
+              "fill",
+              "flag",
+              "ack"
+            ],
+            "initial_old_pending": 1,
+            "state": 48
+          },
+          {
+            "actions": [
+              "flag",
               "fill",
               "ack"
             ],
