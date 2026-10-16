@@ -4,6 +4,11 @@ This repository is the executable companion to **Weakest Observable Grant Contra
 
 ## Result and scope
 
+Manuscript relationship diagrams use the optional Matplotlib renderer:
+`python figures/draw_diagrams.py --check`. Add `--output-dir ../paper/figures`
+to refresh the sibling paper copies. The renderer checks the displayed receipt
+example without running the full scientific replay.
+
 For a finite acyclic plant with one irreversible controllable `grant`, let `W` be the states from which forced grant universally terminates in a declared good state, and let `K(h)` be the physical states compatible with visible history `h`. The unique greatest correct observation-based contract is
 
 ```text
